@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 
 class Program
@@ -14,21 +7,10 @@ class Program
     {
         int Get();
     }
-
     class NewNumber : INewNumber
     {
-        static Random number;
-        static NewNumber instance;
-
-        static NewNumber() 
-        {
-            number = new Random();
-            instance = new NewNumber();
-        }
-
-        private NewNumber() { }
-
-        public static INewNumber CreateInstance() { return instance; }
+        static Random number = new Random();
+        
         public int Get()
         {
             return number.Next(0, 4);
@@ -46,65 +28,48 @@ class Program
 
     void Starer()
     {
-    }
-    static void Main(string[] args)
-    {
         var maxRows = 9;
         var maxColumns = 9;
+        var numbers = new NewNumber();
+        var matrix = new int[maxRows, maxColumns];
 
-        //var matrix = new int?[maxRows, maxColumns];
-        var number = new Random();
-
-        //CreateMatrix(matrix, number);
-
-        //var matrix = new int[,]{ 
-        //    { 9}, 
-        //    { 9},
-        //    { 9},
-        //    { 7},
-        //    { 4},
-        //    { 4},
-        //    { 4},
-        //    { 5},
-        //    { 0}
-        //};
-        var matrix = new int[,]{ { 9, 9, 9, 7, 4, 4, 4, 5, 0 } };
-
+        CreateMatrix(ref matrix, numbers);
         Print(matrix, "First");
-        var needReEdit = false;
-        //do
-        //{
-        //    //EditRow(matrix, number, ref needReEdit);
-        //    //Print(matrix, "After EditRow");
 
-        //    EditColumn(matrix, number, ref needReEdit);
-        //    Print(matrix, "After EditColumn");
-        //} while (needReEdit);
+        bool needReEdit;
+        do
+        {
+            do
+            {
+                needReEdit = EditRow(ref matrix, numbers);
+                Print(matrix, "After EditRow");
+            } while (needReEdit);
 
-        needReEdit = EditRow(matrix, new TestNewNumber());
-        Print(matrix, "After EditRow");
+            needReEdit = EditColumn(ref matrix, numbers);
+            Print(matrix, "After EditColumn");
 
-        //needReEdit = EditColumn(matrix, new TestNewNumber()/*NewNumber.CreateInstance()*/);
-        //Print(matrix, "After EditColumn");
+        } while (needReEdit);
 
+        Print(matrix, "After All");
+    }
 
-
-
-        //new Program().Starer();
+    static void Main(string[] args)
+    {
+        new Program().Starer();
         Console.ReadLine();
     }
 
 
-    static bool EditRow(int[,] matrix, INewNumber number)
+    static bool EditRow(ref int[,] matrix, INewNumber number)
     {
         bool needReEdit = false;
-        for (int i = matrix.GetLength(0) - 1; i >= 0 ; i--)
+        for (int col = matrix.GetLength(0) - 1; col >= 0 ; col--)
         {
             int counter = 1;
-            var element = matrix[i, 0];
-            for (int j = 1; j < matrix.GetLength(1); j++)
+            var element = matrix[col, 0];
+            for (int row = 1; row < matrix.GetLength(1); row++)
             {
-                if (element == matrix[i, j])
+                if (element == matrix[col, row])
                 {
                     counter++;
                 }
@@ -115,34 +80,37 @@ class Program
                         needReEdit = true;
                         for (int n = 1; n <= counter; n++)
                         {
-                            for (int k = i; k >= 0; k--)
+                            for (int k = col; k >= 0; k--)
                             {
                                 if (k == 0)
                                 {
-                                    matrix[k, j - n] = number.Get();
+                                    matrix[k, row - n] = number.Get();
                                     continue;
                                 }
 
-                                matrix[k, j - n] = matrix[k - 1, j - n];
+                                matrix[k, row - n] = matrix[k - 1, row - n];
                             }
                         }
                     }
-                    element = matrix[i, j];
+                    element = matrix[col, row];
                     counter = 1;
                 }
 
-                if (j == matrix.GetLength(1) - 1 && counter >= 3)
+                if (row == matrix.GetLength(1) - 1 && counter >= 3)
                 {
                     needReEdit = true;
                     for (int n = 0; n < counter; n++)
                     {
-                        if (i == 0)
+                        for (int k = col; k >= 0; k--)
                         {
-                            matrix[i, j - n] = number.Get();
-                            continue;
-                        }
+                            if (k == 0)
+                            {
+                                matrix[k, row - n] = number.Get();
+                                continue;
+                            }
 
-                        matrix[i, j - n] = matrix[i - 1, j - n];
+                            matrix[k, row - n] = matrix[k - 1, row - n];
+                        }
                     }
                 }
             }
@@ -151,7 +119,7 @@ class Program
         return needReEdit;
     }
 
-    static bool EditColumn(int[,] matrix, INewNumber number)
+    static bool EditColumn(ref int[,] matrix, INewNumber number)
     {
         bool needReEdit = false;
         for (int row = 0; row < matrix.GetLength(1); row++)
@@ -175,7 +143,6 @@ class Program
                             int copyFrom = fEditCol - counter;
                             if (copyFrom < 0)
                             {
-                                //matrix[fEditCol, row] = number.Next(0, 4);
                                 matrix[fEditCol, row] = number.Get();
                                 continue;
                             }
@@ -205,15 +172,14 @@ class Program
 
         return needReEdit;
     }
-
-
-    static void CreateMatrix(int[,] matrix, Random number)
+    
+    static void CreateMatrix(ref int[,] matrix, INewNumber number)
     {
         for (int i = 0; i < matrix.GetLength(0); i++)
         {
             for (int k = 0; k < matrix.GetLength(1); k++)
             {
-                matrix[i, k] = number.Next(0, 4);
+                matrix[i, k] = number.Get();
             }
         }
     }
